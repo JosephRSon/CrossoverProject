@@ -1,0 +1,187 @@
+import os
+import openai
+
+openai.api_key = 'API_Key'
+
+# setting the initial system message
+system_message = """
+You are a supportive and friendly 4th grade writing tutor named Ms.AI. Your aim is to teach inline with the 4th Grade Common Core Writing standard, here students are expected to draw evidence from literary or informational texts to support analysis, reflection, and research. This means they should be able to read a text and use specific details from that text to form their own ideas and conclusions. You will be aware of the limitations of a ten year old and draw on your experience as a teacher to speak consistently and appropriately. When you give feedback you will be supportive and generous. Do not generate responses beyond 200 words.
+"""
+
+# Initial student input
+student_input = "Hello, I like baseball."
+
+# Setting the initial system message for the teacher
+system_message_teacher = """
+You are a supportive and friendly 4th grade writing tutor named Ms.AI. Your aim is to engage with the student's interest and introduce a question related to it, in line with the 4th Grade Common Core Writing standard. When you give feedback, be supportive and generous. Do not generate responses beyond 200 words.
+"""
+
+# User message for the teacher to respond to the student's input
+user_message_teacher_response = f"""
+The student has expressed an interest. Please introduce yourself and respond to the student's interest. Then, proceed to generate a question related to baseball, aimed at a standard American 10-year-old. Give some example prose and ask them to drawn information from it. The question should be designed to test their ability to analyze, reflect, and conduct research.
+"""
+# ...
+
+# Loop until an acceptable question is found
+while True:
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message_teacher},
+            {"role": "user", "content": student_input},
+            {"role": "user", "content": user_message_teacher_response}
+        ]
+    )
+
+    # Print the teacher's response and generated question
+    question = response['choices'][0]['message']['content'].strip()
+
+    # print the AI's generated question
+    question = response['choices'][0]['message']['content'].strip()
+
+    # setting the user message to evaluate the generated question
+    user_message_evaluate = f"""
+    As a 4th grade teacher familiar with the curriculum, could you provide a short, 80 word analysis of the quality of this generated question in line with the 4th Grade Common Core Writing standard? If it is unnacceptable, please say UNACCEPTABLE. If it is acceptable please say ACCEPTABLE.
+
+    "{question}"
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message_evaluate}
+        ]
+    )
+
+    # get the AI's analysis of the generated question
+    analysis = response['choices'][0]['message']['content'].strip()
+
+    print(f"Student's input: {student_input}\n")
+    print(f"Teacher's Response and Generated Question: {question}\n")
+    print(f"AI's Analysis of the Generated Question: {analysis}\n")
+
+    # if acceptable, break the loop
+    if 'ACCEPTABLE' in analysis:
+        break
+
+
+        # Loop until an acceptable rubric is found
+while True:
+    # Prompt to generate a rubric for the generated question
+    user_message_generate_rubric = f"""
+    Based on the following question, please generate a short, generalised, 150 word rubric for evaluating a 4th grade student's writing question. Consider the expectations of 4th Grade Common Core Writing standard.
+
+    "{question}"
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message_generate_rubric}
+        ]
+    )
+
+    # Extract the AI's generated rubric
+    rubric = response['choices'][0]['message']['content'].strip()
+
+    # Prompt to evaluate the generated rubric
+    user_message_evaluate_rubric = f"""
+    As a 4th grade teacher familiar with the curriculum, could you provide a quick analysis of the quality of this generated rubric in line with the 4th Grade Common Core Writing standard? If it is unnacceptable, please say UNACCEPTABLE. If it is acceptable please say ACCEPTABLE.
+
+    "{rubric}"
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message_evaluate_rubric}
+        ]
+    )
+
+    # Get the AI's analysis of the generated rubric
+    analysis_rubric = response['choices'][0]['message']['content'].strip()
+
+    print(f"Generated Rubric: {rubric}\n")
+    print(f"AI's Analysis of the Generated Rubric: {analysis_rubric}\n")
+
+    # If acceptable, break the loop
+    if 'ACCEPTABLE' in analysis_rubric:
+        break
+
+# Setting a system message to guide the model as a 4th-grade student
+student_system_message = """
+You are now a 4th grade student responding to the following question. Keep in mind the level of analysis, reflection, and research expected from a standard American 10-year-old, and respond as such. Keep your response within 150 words.
+"""
+
+# Prompt for a student's response to the generated question
+user_message_student_response = f"""
+Based on the following question, please provide your response:
+
+"{question}"
+"""
+
+response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": student_system_message},
+        {"role": "user", "content": user_message_student_response}
+    ]
+)
+
+# Extract the AI-generated student response
+student_response = response['choices'][0]['message']['content'].strip()
+
+print(f"Student's Response to the Question: {student_response}\n")
+
+# Setting a system message for providing feedback as a 4th-grade teacher
+teacher_system_message = """
+You are a supportive and friendly 4th-grade writing tutor. Your aim is to provide constructive feedback to the student's response according to the defined "{rubric}". Be mindful of the 4th Grade Common Core Writing standard and provide clear and helpful guidance. Do not exceed 200 words in your feedback.
+"""
+
+# Loop until an acceptable feedback is found
+while True:
+    # Prompt for teacher's feedback to the student's response
+    user_message_feedback = f"""
+    Please provide feedback to the following student's response according to the "{rubric}":
+
+    "{student_response}"
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": teacher_system_message},
+            {"role": "user", "content": user_message_feedback}
+        ]
+    )
+
+    # Extract the AI-generated teacher feedback
+    teacher_feedback = response['choices'][0]['message']['content'].strip()
+
+    # Prompt for assessor's evaluation of the teacher's feedback
+    user_message_evaluate_feedback = f"""
+    As an expert in 4th-grade education, could you provide an analysis of this teacher's feedback in line with the "{rubric}"? If it's unacceptable, please say UNACCEPTABLE. If it's acceptable, please say ACCEPTABLE.
+
+    "{teacher_feedback}"
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": system_message}, 
+            {"role": "user", "content": user_message_evaluate_feedback}
+        ]
+    )
+
+    # Get the AI's analysis of the generated feedback
+    feedback_analysis = response['choices'][0]['message']['content'].strip()
+
+    print(f"Generated Feedback: {teacher_feedback}\n")
+    print(f"AI's Analysis of the Generated Feedback: {feedback_analysis}\n")
+
+    # If acceptable, break the loop
+    if 'ACCEPTABLE' in feedback_analysis:
+        break
